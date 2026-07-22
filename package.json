@@ -44,6 +44,7 @@
     "start": "vite",
     "dev": "vite",
     "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
     "serve": "vite preview"
   },
   "eslintConfig": {
