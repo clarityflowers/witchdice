@@ -16,10 +16,14 @@ import {
   saveEncounterData,
   loadEncounterData,
   deleteEncounterData,
+  loadNpcLibrary,
+  saveNpcLibrary,
   ENCOUNTER_PREFIX,
   STORAGE_ID_LENGTH,
   NPC_LIBRARY_NAME,
 } from '../lancerLocalStorage';
+
+import { parseCompconNpc } from '../domain/parseNpc';
 
 import {
   getIDFromStorageName,
@@ -90,7 +94,7 @@ const LancerNpcMode = ({
       }
 
       // load the npc library into memory
-      if (key === NPC_LIBRARY_NAME) setNpcLibrary( JSON.parse(localStorage.getItem(NPC_LIBRARY_NAME)) )
+      if (key === NPC_LIBRARY_NAME) setNpcLibrary( loadNpcLibrary() )
     }
 
     // // If we have no encounters, make a new one
@@ -130,13 +134,18 @@ const LancerNpcMode = ({
         console.log("Skipping loading NPC because it's marked as deleted ::")
         console.log(npc);
       } else {
-        newNpcLibrary[npc.id] = npc;
+        try {
+          const domainNpc = parseCompconNpc(npc) // handles both V2 and V3
+          newNpcLibrary[domainNpc.id] = domainNpc;
+        } catch (e) {
+          console.error("Failed to parse NPC:", e.message, npc);
+        }
       }
     });
 
     // save the whole library to state & localstorage
     setNpcLibrary(newNpcLibrary)
-    localStorage.setItem(NPC_LIBRARY_NAME, JSON.stringify(newNpcLibrary));
+    saveNpcLibrary(newNpcLibrary);
   }
 
   const deleteNpc = (npc) => {
@@ -145,7 +154,7 @@ const LancerNpcMode = ({
 
     // save the whole library to state & localstorage
     setNpcLibrary(newNpcLibrary)
-    localStorage.setItem(NPC_LIBRARY_NAME, JSON.stringify(newNpcLibrary));
+    saveNpcLibrary(newNpcLibrary);
   }
 
   const deleteAllNpcsWithLabel = (label) => {
@@ -155,7 +164,7 @@ const LancerNpcMode = ({
 
     // save the whole library to state & localstorage
     setNpcLibrary(newNpcLibrary)
-    localStorage.setItem(NPC_LIBRARY_NAME, JSON.stringify(newNpcLibrary));
+    saveNpcLibrary(newNpcLibrary);
   }
 
   const uploadNpcFile = e => {
@@ -175,10 +184,7 @@ const LancerNpcMode = ({
 
         // create ALL the new npcs & save them to localstorage
         if (npcArray && npcArray.length > 0) {
-          let newNpcLibrary = {...npcLibrary}
-          npcArray.forEach(npc => newNpcLibrary[npc.id] = npc);
-          setNpcLibrary(newNpcLibrary)
-          localStorage.setItem(NPC_LIBRARY_NAME, JSON.stringify(newNpcLibrary));
+          createNewNpcs(npcArray)
         }
 
       // single json npc; just create it

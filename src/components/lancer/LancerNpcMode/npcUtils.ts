@@ -175,6 +175,7 @@ export function applyUpdatesToNpc(mechUpdate: Record<string, any>, newNpc: any) 
           'activations': 'activations'
         }
         const convertedKey = keyConversion[statKey] || statKey
+        newNpc.currentStats = newNpc.currentStats || {}
         newNpc.currentStats[convertedKey] = mechUpdate[statKey]
 
         break;

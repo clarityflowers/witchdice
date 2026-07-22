@@ -6,7 +6,8 @@ import {
 
 import type { Lcp, Encounter } from './types';
 import { parseCompconPilot } from './domain/parsePilot';
-import type { DomainPilot } from './domain/schema';
+import { parseCompconNpc } from './domain/parseNpc';
+import type { DomainPilot, DomainNpc } from './domain/schema';
 
 export const MODEL_TAG = 'domain-v1';
 
@@ -57,6 +58,38 @@ export function deletePilotData(pilotID: string, pilotName: string) {
   localStorage.removeItem(storageName);
 }
 
+
+export function saveNpcLibrary(library: Record<string, any>) {
+  const tagged: Record<string, any> = {};
+  for (const id of Object.keys(library)) {
+    tagged[id] = { ...library[id], _model: MODEL_TAG };
+  }
+  localStorage.setItem(NPC_LIBRARY_NAME, JSON.stringify(tagged));
+}
+
+export function loadNpcLibrary(): Record<string, DomainNpc> {
+  const stored = localStorage.getItem(NPC_LIBRARY_NAME);
+  if (!stored) return {};
+  const raw = JSON.parse(stored);
+  const out: Record<string, any> = {};
+  let migrated = false;
+  for (const id of Object.keys(raw)) {
+    const npc = raw[id];
+    if (npc && npc._model === MODEL_TAG) {
+      out[id] = npc;
+      continue;
+    }
+    try {
+      out[id] = parseCompconNpc(npc);
+      migrated = true;
+    } catch (e) {
+      console.error('Failed to migrate stored NPC to domain model; using raw as-is', id, e);
+      out[id] = npc;
+    }
+  }
+  if (migrated) saveNpcLibrary(out);
+  return out;
+}
 
 export function saveEncounterData(encounter: Encounter) {
   saveLocalData(ENCOUNTER_PREFIX, encounter.id.slice(0,STORAGE_ID_LENGTH), encounter.name, encounter);
