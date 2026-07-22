@@ -1,5 +1,5 @@
 import React from 'react';
-import MechSheet from '../MechSheet/MechSheet.jsx';
+import MechSheet from '../MechSheet/MechSheet';
 import FullRepairButton from './FullRepairButton/FullRepairButton.jsx';
 
 import {

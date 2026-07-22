@@ -75,3 +75,67 @@ export interface Encounter {
   id: string;
   name: string;
 }
+
+export interface RobotState {
+  overshield: number;
+  hp: number;
+  heat: number;
+  burn: number;
+  overcharge: number;
+  coreEnergy: number;
+  repairs: number;
+  structure: number;
+  stress: number;
+  conditions?: string[];
+  counters?: Counter[];
+  hasIntactCustomPaintJob?: boolean;
+}
+
+export interface RobotStats {
+  hull: number;
+  hullAccuracy: number;
+  engineering: number;
+  engineeringAccuracy: number;
+  agility: number;
+  agilityAccuracy: number;
+  systems: number;
+  systemsAccuracy: number;
+  maxHP: number;
+  maxHeat: number;
+  maxRepairCap: number;
+  maxStructure: number;
+  maxStress: number;
+  size: number;
+  armor: number;
+  evasion: number;
+  moveSpeed: number;
+  eDef: number;
+  saveTarget: number;
+  sensorRange: number;
+  techAttackBonus: number;
+  limitedBonus: number;
+  rangeSynergies: any[];
+  attackBonus: number;
+  attackBonusRanged: number;
+}
+
+export interface RobotInfo {
+  name: string;
+  id: string;
+  cloud_portrait?: string;
+  hasMultipleLoadouts: boolean;
+  frameID: string;
+  frameSourceIcon: string;
+  frameSourceText: string;
+  frameName: string;
+}
+
+export interface RobotLoadout {
+  frameTraits: any[];
+  systems: any[];
+  pilotTraits: any[];
+  mounts: any[];
+  invades: any[];
+}
+
+export type UpdateMechState = (update: Record<string, any>) => void;
