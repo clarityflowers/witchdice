@@ -7,7 +7,7 @@ import { CharacterList } from '../../shared/CharacterAndMonsterList.jsx';
 import PilotDossier from './PilotDossier.jsx';
 import Bonds from '../Bonds/Bonds.jsx';
 import BondButton from './BondButton.jsx';
-import PlayerMechSheet from './PlayerMechSheet.jsx';
+import PlayerMechSheet from './PlayerMechSheet';
 import JumplinkPanel from '../JumplinkPanel.jsx';
 
 import {
