@@ -59,7 +59,7 @@ export function getNumberByTier(bracketedNumbers: string, npcTier: number): stri
   return parseInt(tierNumbers[npcTier-1]) || 0
 }
 
-export function setNumbersByTier(effectString: string, tier: number) {
+export function setNumbersByTier(effectString: string, tier?: number) {
   let returnString = effectString
   if (!tier) return returnString
 

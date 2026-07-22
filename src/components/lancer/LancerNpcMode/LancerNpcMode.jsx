@@ -4,7 +4,7 @@ import { CharacterList } from '../../shared/CharacterAndMonsterList.jsx';
 import CollapsibleSection from '../../shared/CollapsibleSection.jsx';
 import { ActiveNpcBox, CondensedNpcBox } from './ActiveNpcBox.jsx';
 import EncounterControls from './EncounterControls.jsx';
-import NpcMechSheet from './NpcMechSheet.jsx';
+import NpcMechSheet from './NpcMechSheet';
 import NpcRoster from './NpcRoster.jsx';
 import JumplinkPanel from '../JumplinkPanel.jsx';
 import identityid from './identityid.png';
