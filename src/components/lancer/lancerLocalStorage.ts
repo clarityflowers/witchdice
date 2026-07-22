@@ -46,7 +46,7 @@ export function loadPilotData(pilotID: string): DomainPilot | null {
   try {
     const domain = parseCompconPilot(raw);
     savePilotData(domain);
-    return domain;
+    return { ...domain, _model: MODEL_TAG } as DomainPilot;
   } catch (e) {
     console.error('Failed to migrate stored pilot to domain model; using raw as-is', e);
     return raw as DomainPilot;
@@ -80,7 +80,7 @@ export function loadNpcLibrary(): Record<string, DomainNpc> {
       continue;
     }
     try {
-      out[id] = parseCompconNpc(npc);
+      out[id] = { ...parseCompconNpc(npc), _model: MODEL_TAG };
       migrated = true;
     } catch (e) {
       console.error('Failed to migrate stored NPC to domain model; using raw as-is', id, e);
