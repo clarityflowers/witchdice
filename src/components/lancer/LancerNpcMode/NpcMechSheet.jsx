@@ -2,7 +2,7 @@ import React from 'react';
 import MechSheet from '../MechSheet/MechSheet.jsx';
 
 import { capitalize } from '../../../utils.js';
-import { getCountersFromPilot } from '../MechState/mechStateUtils.js';
+import { getCountersFromPilot } from '../MechState/mechStateUtils';
 import { isNpcFeatureTechAttack } from '../MechSheet/MechMount.jsx';
 
 import {
@@ -11,7 +11,7 @@ import {
   getNpcSkillCheckAccuracy,
   setNumbersByTier,
   getActivationType,
-} from './npcUtils.js';
+} from './npcUtils';
 
 import {
   findNpcClassData,

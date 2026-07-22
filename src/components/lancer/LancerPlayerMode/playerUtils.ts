@@ -1,15 +1,16 @@
 import {
   getLimitedBonus,
-} from '../MechState/mechStateUtils.js';
+} from '../MechState/mechStateUtils';
 
 import {
   findWeaponData,
   findFrameData,
   findSystemData,
-} from '../lancerData.js';
+} from '../lancerData';
 
+import type { Mech, Pilot } from '../types';
 
-export function applyUpdatesToPlayer(mechUpdate, newPilotData, newMechData) {
+export function applyUpdatesToPlayer(mechUpdate: Record<string, any>, newPilotData: Pilot, newMechData: Mech) {
   if (!newPilotData || !newMechData) return
 
   const frameData = findFrameData(newMechData.frame);
@@ -17,12 +18,10 @@ export function applyUpdatesToPlayer(mechUpdate, newPilotData, newMechData) {
   Object.keys(mechUpdate).forEach(statKey => {
     const updateValue = mechUpdate[statKey]
 
-    // console.log('statKey',statKey, ':', mechUpdate[statKey]);
     switch (statKey) {
-      // update something on the pilot
       case 'custom_counters':
       case 'counter_data':
-        newPilotData[statKey] = updateValue
+        (newPilotData as any)[statKey] = updateValue
         break;
 
       case 'systemUses':
@@ -46,7 +45,7 @@ export function applyUpdatesToPlayer(mechUpdate, newPilotData, newMechData) {
         if (updateValue.source) {
           perRoundState[updateValue.source] = Math.max(updateValue.uses || 0, 0)
         }
-        newPilotData.state.per_round_uses = perRoundState // in case it was new
+        newPilotData.state.per_round_uses = perRoundState
         break;
       case 'resetPerRoundCounts':
         newPilotData.state.per_round_uses = {}
@@ -84,31 +83,25 @@ export function applyUpdatesToPlayer(mechUpdate, newPilotData, newMechData) {
       case 'repairAllWeaponsAndSystems':
         const limitedBonus = getLimitedBonus(newMechData, newPilotData, frameData);
 
-        // - systems - //
         [loadout.systems, loadout.integratedSystems].forEach(systemArray => {
           systemArray.forEach(system => {
-            // Repair
             system.destroyed = false
-            // Restore limited uses
             const systemData = findSystemData(system.id)
             if (systemData && systemData.tags) {
-              const limitedTag = systemData.tags.find(tag => tag.id === 'tg_limited')
+              const limitedTag = systemData.tags.find((tag: any) => tag.id === 'tg_limited')
               if (limitedTag) system.uses = limitedTag.val + limitedBonus
             }
           })
         });
-        // - weapons - //
         [loadout.mounts, [loadout.improved_armament], [loadout.integratedWeapon], [loadout.superheavy_mounting]].forEach(weaponMounts => {
-          weaponMounts.forEach(mount => {
-            [...mount.slots, ...(mount.extra || [])].forEach(slot => {
+          weaponMounts.forEach((mount: any) => {
+            [...mount.slots, ...(mount.extra || [])].forEach((slot: any) => {
               if (slot.weapon) {
-                // Repair
                 slot.weapon.destroyed = false
                 slot.weapon.loaded = true
-                // Restore limited uses
                 const weaponData = findWeaponData(slot.weapon.id)
                 if (weaponData && weaponData.tags) {
-                  const limitedTag = weaponData.tags.find(tag => tag.id === 'tg_limited')
+                  const limitedTag = weaponData.tags.find((tag: any) => tag.id === 'tg_limited')
                   if (limitedTag) slot.weapon.uses = limitedTag.val + limitedBonus
                 }
               }
@@ -117,13 +110,12 @@ export function applyUpdatesToPlayer(mechUpdate, newPilotData, newMechData) {
         });
         break;
 
-      // update a mech value
       case 'active':
       case 'conditions':
-        newMechData[statKey] = updateValue
+        (newMechData as any)[statKey] = updateValue
         break;
       default:
-        newMechData[statKey] = parseInt(updateValue)
+        (newMechData as any)[statKey] = parseInt(updateValue)
         break;
       }
   });

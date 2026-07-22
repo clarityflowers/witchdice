@@ -20,7 +20,7 @@ import {
   getSkillCheckAccuracy,
   getMechTechAttack,
   getCountersFromPilot,
-} from '../MechState/mechStateUtils.js';
+} from '../MechState/mechStateUtils';
 
 import {
   getToHitBonusFromMech,
@@ -41,12 +41,12 @@ import {
   getUsesPerRound,
 } from '../lancerData.js';
 
-import { applyUpdatesToPlayer } from './playerUtils.js';
+import { applyUpdatesToPlayer } from './playerUtils';
 
 import { deepCopy } from '../../../utils.js';
 import {
   savePilotData,
-} from '../lancerLocalStorage.js';
+} from '../lancerLocalStorage';
 
 
 const PlayerMechSheet = ({

@@ -19,7 +19,7 @@ import {
   ENCOUNTER_PREFIX,
   STORAGE_ID_LENGTH,
   NPC_LIBRARY_NAME,
-} from '../lancerLocalStorage.js';
+} from '../lancerLocalStorage';
 
 import {
   getIDFromStorageName,
@@ -27,7 +27,7 @@ import {
 } from '../../../localstorage.js';
 
 import { findNpcClassData, } from '../lancerData.js';
-import { getStat, getMarkerForNpcID, fullRepairNpc, applyUpdatesToNpc } from './npcUtils.js';
+import { getStat, getMarkerForNpcID, fullRepairNpc, applyUpdatesToNpc } from './npcUtils';
 
 import './LancerNpcMode.scss';
 

@@ -16,7 +16,7 @@ import {
   LCP_PREFIX,
   STORAGE_ID_LENGTH,
   LANCER_SQUAD_MECH_KEY,
-} from './lancerLocalStorage.js';
+} from './lancerLocalStorage';
 
 import { deepCopy } from '../../utils.js';
 import { getIDFromStorageName } from '../../localstorage.js';

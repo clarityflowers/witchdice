@@ -1,7 +1,7 @@
 import { getIDFromStorageName } from '../../localstorage.js';
 import { deepCopy, capitalize, snakeToCamel } from '../../utils.js';
-import { getNumberByTier } from './LancerNpcMode/npcUtils.js';
-import { loadLcpData, LCP_PREFIX, STORAGE_ID_LENGTH } from './lancerLocalStorage.js';
+import { getNumberByTier } from './LancerNpcMode/npcUtils';
+import { loadLcpData, LCP_PREFIX, STORAGE_ID_LENGTH } from './lancerLocalStorage';
 
 import allStatuses from '@massif/lancer-data/lib/statuses.json';
 

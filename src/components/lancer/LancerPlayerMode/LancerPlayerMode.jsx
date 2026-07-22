@@ -18,12 +18,12 @@ import {
   STORAGE_ID_LENGTH,
   SELECTED_CHARACTER_KEY,
   LANCER_SQUAD_MECH_KEY,
-} from '../lancerLocalStorage.js';
+} from '../lancerLocalStorage';
 
 import { deepCopy } from '../../../utils.js';
 import { getIDFromStorageName } from '../../../localstorage.js';
-import { createSquadMech } from '../SquadPanel/squadUtils.js';
-import { applyUpdatesToPlayer } from './playerUtils.js';
+import { createSquadMech } from '../SquadPanel/squadUtils';
+import { applyUpdatesToPlayer } from './playerUtils';
 
 import compendiaJonesJson from './YOURGRACE.json';
 import './LancerPlayerMode.scss';
