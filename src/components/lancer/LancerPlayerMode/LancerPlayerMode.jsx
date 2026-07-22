@@ -24,6 +24,7 @@ import { deepCopy } from '../../../utils.js';
 import { getIDFromStorageName } from '../../../localstorage.js';
 import { createSquadMech } from '../SquadPanel/squadUtils';
 import { applyUpdatesToPlayer } from './playerUtils';
+import { parseCompconPilot, carryOverLocalPilotFields } from '../domain/parsePilot';
 
 import compendiaJonesJson from './YOURGRACE.json';
 import './LancerPlayerMode.scss';
@@ -77,7 +78,7 @@ const LancerPlayerMode = ({
 
     // Save some dummy data (it's my OC, okay? I can have this)
     if (pilotEntries.length === 0) {
-      savePilotData(compendiaJonesJson)
+      savePilotData(parseCompconPilot(compendiaJonesJson))
       pilotEntries.push({name: 'Compendia Jones', id: compendiaJonesJson.id})
     }
 
@@ -170,21 +171,23 @@ const LancerPlayerMode = ({
     setIsWaitingOnSharecodeResponse(true)
   }
 
-  const createNewPilot = (pilot, viaShareCode = null) => {
-    if (!pilot || !pilot.id || !pilot.mechs) return // sanity-check the pilot file
+  const createNewPilot = (rawPilot, viaShareCode = null) => {
+    let pilot
+    try {
+      pilot = parseCompconPilot(rawPilot) // handles both V2 and V3 (incl. envelope unwrap)
+    } catch (e) {
+      console.log('Failed to parse pilot file:', e.message)
+      return
+    }
 
     let newPilotEntries = [...allPilotEntries]
 
     // remove any existing pilots of this ID
-    let preserveBondData = null
     let pilotIndex = allPilotEntries.findIndex(entry => entry.id === pilot.id);
     if (pilotIndex >= 0) {
       // PRESERVE bond data; players should be able to use COMPCON to update mechs without clearing thier local bond stuff
       if (viaShareCode) {
-        const old = loadPilotData(activePilotID)
-        preserveBondData = {
-          bondId:old.bondId, xp:old.xp, stress:old.stress, burdens:old.burdens, bondPowers:old.bondPowers, bondAnswers:old.bondAnswers, minorIdeal:old.minorIdeal
-        }
+        pilot = carryOverLocalPilotFields(pilot, loadPilotData(pilot.id))
       }
       deletePilotData(allPilotEntries[pilotIndex].id, allPilotEntries[pilotIndex].name)
       newPilotEntries.splice(pilotIndex, 1)
@@ -192,8 +195,6 @@ const LancerPlayerMode = ({
 
     // add the sharecode to this pilot if we have one
     if (viaShareCode) pilot.shareCode = viaShareCode
-    // preserve bond data
-    if (preserveBondData) pilot = {...pilot, ...preserveBondData}
 
     // store the entry & set it to active
     newPilotEntries.push({name: pilot.name, id: pilot.id});

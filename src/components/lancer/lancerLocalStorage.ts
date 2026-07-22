@@ -4,7 +4,11 @@ import {
   getStorageName,
 } from '../../localstorage.js';
 
-import type { Pilot, Lcp, Encounter } from './types';
+import type { Lcp, Encounter } from './types';
+import { parseCompconPilot } from './domain/parsePilot';
+import type { DomainPilot } from './domain/schema';
+
+export const MODEL_TAG = 'domain-v1';
 
 export const PILOT_PREFIX = 'pilot';
 export const LCP_PREFIX = 'lcp';
@@ -29,12 +33,23 @@ export function deleteLcpData(lcpID: string, lcpName: string) {
 
 
 
-export function savePilotData(pilot: Pilot) {
-  saveLocalData(PILOT_PREFIX, pilot.id.slice(0,STORAGE_ID_LENGTH), pilot.name, pilot);
+export function savePilotData(pilot: DomainPilot) {
+  const tagged = { ...pilot, _model: MODEL_TAG };
+  saveLocalData(PILOT_PREFIX, pilot.id.slice(0,STORAGE_ID_LENGTH), pilot.name, tagged);
 }
 
-export function loadPilotData(pilotID: string): Pilot | null {
-  return loadLocalData(PILOT_PREFIX, pilotID.slice(0,STORAGE_ID_LENGTH));
+export function loadPilotData(pilotID: string): DomainPilot | null {
+  const raw: any = loadLocalData(PILOT_PREFIX, pilotID.slice(0,STORAGE_ID_LENGTH));
+  if (!raw) return null;
+  if (raw._model === MODEL_TAG) return raw as DomainPilot;
+  try {
+    const domain = parseCompconPilot(raw);
+    savePilotData(domain);
+    return domain;
+  } catch (e) {
+    console.error('Failed to migrate stored pilot to domain model; using raw as-is', e);
+    return raw as DomainPilot;
+  }
 }
 
 export function deletePilotData(pilotID: string, pilotName: string) {

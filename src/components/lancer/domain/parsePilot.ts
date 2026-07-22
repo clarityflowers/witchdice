@@ -65,6 +65,19 @@ function normalizeMech(mech: any) {
   return mech;
 }
 
+const LOCAL_PILOT_FIELDS = [
+  'bondId', 'xp', 'stress', 'burdens', 'bondPowers', 'bondAnswers', 'minorIdeal',
+] as const;
+
+export function carryOverLocalPilotFields(parsed: DomainPilot, existing: any): DomainPilot {
+  if (!existing) return parsed;
+  const carried: any = { ...parsed };
+  for (const field of LOCAL_PILOT_FIELDS) {
+    if (existing[field] !== undefined) carried[field] = existing[field];
+  }
+  return carried;
+}
+
 export function parseCompconPilot(raw: any): DomainPilot {
   const pilot = deepCopy(unwrapEnvelope(raw));
 
