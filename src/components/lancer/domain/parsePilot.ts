@@ -6,6 +6,11 @@ function unwrapEnvelope(raw: any): any {
   return raw;
 }
 
+// V3 inlines ID references as objects; V2 stores them as bare ID strings.
+function idOf(ref: any): string {
+  return (ref && typeof ref === 'object') ? ref.id : ref;
+}
+
 function normalizeWeapon(weapon: any) {
   if (!weapon) return;
   if (!('uses' in weapon) && 'currentUses' in weapon) weapon.uses = weapon.currentUses;
@@ -30,6 +35,9 @@ function normalizeMechLoadout(loadout: any) {
     loadout.integratedWeapon,
   ].filter(Boolean);
   slotContainers.forEach((mount: any) => {
+    if (Array.isArray(mount.bonus_effects)) {
+      mount.bonus_effects = mount.bonus_effects.map(idOf);
+    }
     [...(mount.slots || []), ...(mount.extra || [])].forEach((slot: any) => {
       if (slot) normalizeWeapon(slot.weapon);
     });
@@ -91,6 +99,10 @@ export function parseCompconPilot(raw: any): DomainPilot {
 
   if (!pilot.loadout && Array.isArray(pilot.loadouts)) {
     pilot.loadout = pilot.loadouts[0];
+  }
+
+  if (Array.isArray(pilot.core_bonuses)) {
+    pilot.core_bonuses = pilot.core_bonuses.map(idOf);
   }
 
   pilot.mechs = pilot.mechs.map(normalizeMech);

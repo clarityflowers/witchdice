@@ -39,7 +39,7 @@ export const PilotSchema = z.looseObject({
   mechs: z.array(MechSchema),
   mechSkills: z.array(num).default([]),
   talents: z.array(z.any()).default([]),
-  core_bonuses: z.array(z.any()).default([]),
+  core_bonuses: z.array(z.string()).default([]),
   licenses: z.array(z.any()).default([]),
   skills: z.array(z.any()).default([]),
   cloud_portrait: z.string().optional(),

@@ -47,6 +47,24 @@ if (!hasExamples) {
       });
     });
 
+    it('normalizes all core-bonus references to id strings (pilot + mount bonus_effects)', () => {
+      [...v2pcs, ...v3pcs].forEach(({ name, json }) => {
+        const pilot = parseCompconPilot(json);
+        pilot.core_bonuses.forEach(cb =>
+          expect(typeof cb, `${name} pilot core_bonus`).toBe('string'));
+        pilot.mechs.forEach(mech => {
+          (mech.loadouts || []).forEach((lo: any) => {
+            [...(lo.mounts || []), lo.improved_armament, lo.superheavy_mounting, lo.integratedWeapon]
+              .filter(Boolean)
+              .forEach((mount: any) => {
+                (mount.bonus_effects || []).forEach((e: any) =>
+                  expect(typeof e, `${name} mount bonus_effect`).toBe('string'));
+              });
+          });
+        });
+      });
+    });
+
     it('normalizes V3 mech stats (stats.current + corePower + statuses) to flat V2 shape', () => {
       const v3 = v3pcs[0];
       expect(v3, 'need at least one V3 pilot fixture').toBeTruthy();
