@@ -6,6 +6,7 @@ import {
   findWeaponData,
   findFrameData,
   findSystemData,
+  getSystemLimited,
 } from '../lancerData';
 
 import type { Mech, Pilot } from '../types';
@@ -83,31 +84,31 @@ export function applyUpdatesToPlayer(mechUpdate: Record<string, any>, newPilotDa
       case 'repairAllWeaponsAndSystems':
         const limitedBonus = getLimitedBonus(newMechData, newPilotData, frameData);
 
-        [loadout.systems, loadout.integratedSystems].forEach(systemArray => {
-          systemArray.forEach(system => {
-            system.destroyed = false
-            const systemData = findSystemData(system.id)
-            if (systemData && systemData.tags) {
-              const limitedTag = systemData.tags.find((tag: any) => tag.id === 'tg_limited')
-              if (limitedTag) system.uses = limitedTag.val + limitedBonus
-            }
-          })
-        });
-        [loadout.mounts, [loadout.improved_armament], [loadout.integratedWeapon], [loadout.superheavy_mounting]].forEach(weaponMounts => {
-          weaponMounts.forEach((mount: any) => {
-            [...mount.slots, ...(mount.extra || [])].forEach((slot: any) => {
-              if (slot.weapon) {
-                slot.weapon.destroyed = false
-                slot.weapon.loaded = true
-                const weaponData = findWeaponData(slot.weapon.id)
-                if (weaponData && weaponData.tags) {
-                  const limitedTag = weaponData.tags.find((tag: any) => tag.id === 'tg_limited')
-                  if (limitedTag) slot.weapon.uses = limitedTag.val + limitedBonus
-                }
-              }
-            })
-          })
-        });
+        const repairSystem = (system: any) => {
+          if (!system) return
+          system.destroyed = false
+          const limited = getSystemLimited(system, findSystemData(system.id), limitedBonus)
+          if (limited) system.uses = limited.max
+        };
+        const repairWeapon = (weapon: any) => {
+          if (!weapon) return
+          weapon.destroyed = false
+          weapon.loaded = true
+          const limited = getSystemLimited(weapon, findWeaponData(weapon.id), limitedBonus)
+          if (limited) weapon.uses = limited.max
+        };
+
+        [loadout.systems, loadout.integratedSystems].forEach((systemArray: any) =>
+          (systemArray || []).forEach(repairSystem)
+        );
+
+        [...(loadout.mounts || []), loadout.improved_armament, loadout.integratedWeapon, loadout.superheavy_mounting]
+          .filter(Boolean)
+          .forEach((mount: any) =>
+            [...(mount.slots || []), ...(mount.extra || [])].forEach((slot: any) => slot && repairWeapon(slot.weapon))
+          );
+
+        (loadout.integratedMounts || []).forEach((slot: any) => slot && repairWeapon(slot.weapon));
         break;
 
       case 'active':
