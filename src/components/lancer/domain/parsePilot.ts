@@ -69,6 +69,8 @@ function normalizeMech(mech: any) {
     mech.conditions = mech.statuses || [];
   }
 
+  mech.conditions = (mech.conditions || []).map(idOf);
+
   (mech.loadouts || []).forEach(normalizeMechLoadout);
   return mech;
 }

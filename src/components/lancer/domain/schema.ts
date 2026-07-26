@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 const num = z.coerce.number();
 
+const IdRankRef = z.looseObject({ id: z.string(), rank: num.optional() });
+
 export const MechSystemSchema = z.looseObject({
   id: z.string(),
   destroyed: z.boolean().optional(),
@@ -38,10 +40,10 @@ export const PilotSchema = z.looseObject({
   callsign: z.string().optional(),
   mechs: z.array(MechSchema),
   mechSkills: z.array(num).default([]),
-  talents: z.array(z.any()).default([]),
+  talents: z.array(IdRankRef).default([]),
   core_bonuses: z.array(z.string()).default([]),
-  licenses: z.array(z.any()).default([]),
-  skills: z.array(z.any()).default([]),
+  licenses: z.array(IdRankRef).default([]),
+  skills: z.array(IdRankRef).default([]),
   cloud_portrait: z.string().optional(),
   state: z.looseObject({
     per_round_uses: z.record(z.string(), z.any()).default({}),
@@ -64,7 +66,7 @@ export const NpcSchema = z.looseObject({
   class: z.string(),
   tier: num.optional(),
   templates: z.array(z.string()).default([]),
-  labels: z.array(z.any()).default([]),
+  labels: z.array(z.string()).default([]),
   stats: z.looseObject({}).catchall(z.any()),
   currentStats: z.looseObject({}).catchall(z.any()).optional(),
   items: z.array(z.looseObject({ itemID: z.string() })).default([]),
