@@ -25,6 +25,7 @@ import { getIDFromStorageName } from '../../../localstorage.js';
 import { createSquadMech } from '../SquadPanel/squadUtils';
 import { applyUpdatesToPlayer } from './playerUtils';
 import { parseCompconPilot, carryOverLocalPilotFields } from '../domain/parsePilot';
+import { registerPilotInlineContent } from '../lancerData';
 
 import compendiaJonesJson from './YOURGRACE.json';
 import './LancerPlayerMode.scss';
@@ -56,6 +57,7 @@ const LancerPlayerMode = ({
 
   // const activePilot = allPilotEntries.find(pilot => pilot.id === activePilotID);
   const activePilot = activePilotID && loadPilotData(activePilotID); // load the pilot data from local storage
+  if (activePilot) registerPilotInlineContent(activePilot);
   const allMechEntries = activePilot ? activePilot.mechs : [];
   const activeMech = allMechEntries.find(mech => mech.id === activeMechID);
 

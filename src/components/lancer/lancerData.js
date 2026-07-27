@@ -237,9 +237,61 @@ function findGameDataFromUploadedLcp(gameDataType, gameDataID) {
   return allGameDataOfType[gameDataID]
 }
 
+const inlineContentRegistry = {
+  frames: {},
+  weapons: {},
+  systems: {},
+  mods: {},
+  talents: {},
+  skills: {},
+  coreBonuses: {},
+}
+
+export function registerInlineContent(type, id, data) {
+  if (id && data && inlineContentRegistry[type]) inlineContentRegistry[type][id] = data
+}
+
+export function registerPilotInlineContent(pilot) {
+  if (!pilot) return
+
+  ;(pilot.skills || []).forEach(skill => registerInlineContent('skills', skill.id, skill.data))
+  ;(pilot.talents || []).forEach(talent => registerInlineContent('talents', talent.id, talent.data))
+
+  ;(pilot.mechs || []).forEach(mech => {
+    registerInlineContent('frames', mech.frame, mech.frameData)
+
+    ;(mech.loadouts || []).forEach(loadout => {
+      ;[...(loadout.systems || []), ...(loadout.integratedSystems || [])].forEach(system =>
+        registerInlineContent('systems', system.id, system.data)
+      )
+
+      const containers = [
+        ...(loadout.mounts || []),
+        loadout.improved_armament,
+        loadout.superheavy_mounting,
+        loadout.integratedWeapon,
+      ].filter(mount => mount)
+
+      containers.forEach(mount => {
+        ;[...(mount.slots || []), ...(mount.extra || [])].forEach(slot => {
+          if (slot && slot.weapon) {
+            registerInlineContent('weapons', slot.weapon.id, slot.weapon.data)
+            if (slot.weapon.mod) registerInlineContent('mods', slot.weapon.mod.id, slot.weapon.mod.data)
+          }
+        })
+      })
+
+      ;(loadout.integratedMounts || []).forEach(slot => {
+        if (slot && slot.weapon) registerInlineContent('weapons', slot.weapon.id, slot.weapon.data)
+      })
+    })
+  })
+}
+
 export const findFrameData = (frameID) => {
   var frameData = allFrames[frameID]
   if (!frameData) frameData = findGameDataFromUploadedLcp('frames', frameID)
+  if (!frameData) frameData = inlineContentRegistry.frames[frameID]
   return frameData ? frameData : findFrameData('missing_frame')
 }
 
@@ -248,18 +300,21 @@ export const findWeaponData = (weaponID) => {
   var weaponData = allWeapons[weaponID]
   if (!weaponData) weaponData = findGameDataFromUploadedLcp('weapons', weaponID)
   if (!weaponData) weaponData = baselineWeapons.find(baselineWeapon => baselineWeapon.id === weaponID)
+  if (!weaponData) weaponData = inlineContentRegistry.weapons[weaponID]
   return weaponData ? weaponData : findWeaponData('missing_mechweapon')
 }
 
 export const findTalentData = (talentID) => {
   var talentData = allTalents[talentID]
   if (!talentData) talentData = findGameDataFromUploadedLcp('talents', talentID)
+  if (!talentData) talentData = inlineContentRegistry.talents[talentID]
   return talentData ? talentData : blankTalent
 }
 
 export const findSkillData = (skillID) => {
   var skillData = allSkills[skillID]
   if (!skillData) skillData = findGameDataFromUploadedLcp('skills', skillID)
+  if (!skillData) skillData = inlineContentRegistry.skills[skillID]
   return skillData ? skillData : blankSkill
 }
 
@@ -272,18 +327,21 @@ export const findPilotGearData = (pilotGearID) => {
 export const findCoreBonusData = (coreBonusID) => {
   var coreBonusData = allCoreBonuses[coreBonusID]
   if (!coreBonusData) coreBonusData = findGameDataFromUploadedLcp('coreBonuses', coreBonusID)
+  if (!coreBonusData) coreBonusData = inlineContentRegistry.coreBonuses[coreBonusID]
   return coreBonusData ? coreBonusData : findWeaponData('missing_corebonus')
 }
 
 export const findSystemData = (systemID) => {
   var systemData = allSystems[systemID]
   if (!systemData) systemData = findGameDataFromUploadedLcp('systems', systemID)
+  if (!systemData) systemData = inlineContentRegistry.systems[systemID]
   return systemData ? systemData : findWeaponData('missing_mechsystem')
 }
 
 export const findModData = (modID) => {
   var modData = allMods[modID]
   if (!modData) modData = findGameDataFromUploadedLcp('mods', modID)
+  if (!modData) modData = inlineContentRegistry.mods[modID]
   return modData ? modData : findModData('missing_weaponmod')
 }
 
