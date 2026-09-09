@@ -53,6 +53,7 @@ export interface Pilot {
   mechSkills: [hull: number, agility: number, systems: number, engineering: number];
   talents: PilotTalent[];
   core_bonuses: string[];
+  core_bonus_data?: { id: string; [key: string]: any }[];
   licenses: PilotLicense[];
   custom_counters?: Counter[];
   counter_data?: Counter[];

@@ -201,6 +201,7 @@ const inlineContentRegistry = {
   talents: {},
   skills: {},
   coreBonuses: {},
+  pilotGear: {},
   npcClasses: {},
   npcFeatures: {},
   npcTemplates: {},
@@ -215,6 +216,13 @@ export function registerPilotInlineContent(pilot) {
 
   ;(pilot.skills || []).forEach(skill => registerInlineContent('skills', skill.id, skill.data))
   ;(pilot.talents || []).forEach(talent => registerInlineContent('talents', talent.id, talent.data))
+  ;(pilot.core_bonus_data || []).forEach(coreBonus => registerInlineContent('coreBonuses', coreBonus.id, coreBonus))
+
+  ;[pilot.loadout, ...(pilot.loadouts || [])].filter(loadout => loadout).forEach(loadout => {
+    ;[...(loadout.gear || []), ...(loadout.armor || []), ...(loadout.weapons || [])].forEach(gear => {
+      if (gear) registerInlineContent('pilotGear', gear.id, gear.data)
+    })
+  })
 
   ;(pilot.mechs || []).forEach(mech => {
     registerInlineContent('frames', mech.frame, mech.frameData)
@@ -287,6 +295,7 @@ export const findSkillData = (skillID) => {
 
 export const findPilotGearData = (pilotGearID) => {
   var pilotGearData = allPilotGear[pilotGearID]
+  if (!pilotGearData) pilotGearData = inlineContentRegistry.pilotGear[pilotGearID]
   return pilotGearData ? pilotGearData : blankPilotGear
 }
 

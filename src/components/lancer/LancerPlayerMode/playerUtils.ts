@@ -11,6 +11,10 @@ import {
 
 import type { Mech, Pilot } from '../types';
 
+export function resetAllLimitedUses(pilot: Pilot) {
+  pilot.mechs.forEach(mech => applyUpdatesToPlayer({ repairAllWeaponsAndSystems: true }, pilot, mech))
+}
+
 export function applyUpdatesToPlayer(mechUpdate: Record<string, any>, newPilotData: Pilot, newMechData: Mech) {
   if (!newPilotData || !newMechData) return
 

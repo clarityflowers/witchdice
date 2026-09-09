@@ -104,6 +104,8 @@ export function parseCompconPilot(raw: any): DomainPilot {
   }
 
   if (Array.isArray(pilot.core_bonuses)) {
+    const inlineCoreBonuses = pilot.core_bonuses.filter((ref: any) => ref && typeof ref === 'object');
+    if (inlineCoreBonuses.length > 0) pilot.core_bonus_data = inlineCoreBonuses;
     pilot.core_bonuses = pilot.core_bonuses.map(idOf);
   }
 

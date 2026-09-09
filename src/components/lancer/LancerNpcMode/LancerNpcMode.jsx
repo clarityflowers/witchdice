@@ -275,6 +275,7 @@ const LancerNpcMode = ({
   const createNewEncounter = () => {
     let newEncounter = buildNewEncounter()
     setActiveEncounterID(newEncounter.id)
+    localStorage.setItem(SELECTED_ENCOUNTER_KEY, newEncounter.id.slice(0,STORAGE_ID_LENGTH));
 
     let encounterEntries = [...allEncounterEntries]
     encounterEntries.push({name: newEncounter.name, id: newEncounter.id})

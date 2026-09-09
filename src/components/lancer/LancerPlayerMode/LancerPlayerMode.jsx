@@ -23,7 +23,7 @@ import {
 import { deepCopy } from '../../../utils.js';
 import { getIDFromStorageName } from '../../../localstorage.js';
 import { createSquadMech } from '../SquadPanel/squadUtils';
-import { applyUpdatesToPlayer } from './playerUtils';
+import { applyUpdatesToPlayer, resetAllLimitedUses } from './playerUtils';
 import { parseCompconPilot, carryOverLocalPilotFields } from '../domain/parsePilot';
 import { registerPilotInlineContent } from '../lancerData';
 
@@ -181,6 +181,9 @@ const LancerPlayerMode = ({
       console.log('Failed to parse pilot file:', e.message)
       return
     }
+
+    registerPilotInlineContent(pilot)
+    resetAllLimitedUses(pilot)
 
     let newPilotEntries = [...allPilotEntries]
 

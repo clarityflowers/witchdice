@@ -8,6 +8,8 @@ import {
   findNpcFeatureData,
   findNpcTemplateData,
   getModdedWeaponData,
+  findPilotGearData,
+  findCoreBonusData,
 } from '../lancerData';
 import { loadFixture, INLINE_LCP_PILOT, v3Npcs } from './__fixtures__/fixtures';
 
@@ -58,4 +60,30 @@ describe('inline content registry resolves V3 self-contained content', () => {
         });
     });
   });
+  it('resolves homebrew pilot gear carried inline in the export', () => {
+    const pilot = parseCompconPilot(loadFixture('v3-pilots', 'v3-pilot-04-moth-hour.json'));
+
+    expect(findPilotGearData('pg_player_two_neural_bypass').name).toBe(blankPilotGearName());
+
+    registerPilotInlineContent(pilot);
+
+    expect(findPilotGearData('pg_player_two_neural_bypass').name).toBe('Player_Two Neural Bypass');
+  });
+
+  it('keeps V3 inline core bonus data and resolves it through the registry', () => {
+    const raw = loadFixture('v3-pilots', 'v3-pilot-04-moth-hour.json');
+    raw.data.core_bonuses[0].id = 'cb_homebrew_test_bonus';
+    const pilot = parseCompconPilot(raw);
+
+    expect(pilot.core_bonuses).toContain('cb_homebrew_test_bonus');
+    expect(findCoreBonusData('cb_homebrew_test_bonus').id).not.toBe('cb_homebrew_test_bonus');
+
+    registerPilotInlineContent(pilot);
+
+    expect(findCoreBonusData('cb_homebrew_test_bonus').id).toBe('cb_homebrew_test_bonus');
+  });
 });
+
+function blankPilotGearName() {
+  return findPilotGearData('pg_definitely_not_a_real_gear_id').name;
+}
