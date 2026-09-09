@@ -29,6 +29,17 @@ function refData(ref: any): any {
   return (ref && typeof ref === 'object') ? ref.data : undefined;
 }
 
+export function defaultNpcName(npc: any): string {
+  const className = (refData(npc.class) && refData(npc.class).name) || 'NPC';
+  const templateNames = (npc.templates || []).map((t: any) => refData(t) && refData(t).name).filter((n: any) => n);
+  return [
+    npc.tier ? `T${npc.tier}` : '',
+    ...templateNames,
+    className,
+    npc.tag || '',
+  ].filter(part => part).join(' ');
+}
+
 function labelTitles(labels: any): string[] {
   return (labels || [])
     .map((label: any) => (label && typeof label === 'object') ? label.title : label)
@@ -95,6 +106,7 @@ export function parseCompconNpc(raw: any): DomainNpc {
   const { features, ...rest } = src;
   const npc = {
     ...rest,
+    name: src.name || defaultNpcName(src),
     class: refId(src.class),
     classData: refData(src.class),
     templates: (src.templates || []).map(refId),

@@ -6,7 +6,7 @@ import {
 
 import type { Encounter } from './types';
 import { parseCompconPilot } from './domain/parsePilot';
-import { parseCompconNpc } from './domain/parseNpc';
+import { parseCompconNpc, defaultNpcName } from './domain/parseNpc';
 import { applyUpdatesToNpc, getStat } from './LancerNpcMode/npcUtils';
 import { registerNpcInlineContent } from './lancerData';
 import type { DomainPilot, DomainNpc } from './domain/schema';
@@ -65,6 +65,17 @@ export function saveNpcLibrary(library: Record<string, any>) {
   localStorage.setItem(NPC_LIBRARY_NAME, JSON.stringify(tagged));
 }
 
+function fillMissingNpcName(npc: any): boolean {
+  if (npc.name) return false;
+  const className = npc.classData && npc.classData.name;
+  npc.name = defaultNpcName({
+    ...npc,
+    class: { id: npc.class, data: className ? npc.classData : undefined },
+    templates: (npc.templateData || []).map((data: any) => ({ id: data.id, data })),
+  });
+  return true;
+}
+
 function normalizeNpcCombatState(npc: any) {
   const current = npc.currentStats || {};
   Object.keys(current).forEach(key => {
@@ -84,6 +95,7 @@ function migrateStoredNpcs(stored: Record<string, any>, describe: string) {
   for (const key of Object.keys(stored)) {
     const npc = stored[key];
     if (npc && npc._model === MODEL_TAG) {
+      if (fillMissingNpcName(npc)) migrated = true;
       out[key] = npc;
       continue;
     }

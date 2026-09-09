@@ -43,6 +43,7 @@ function keysWithPrefix(storage: LocalStorageMock, prefix: string) {
 function expectDomainNpc(npc: any, label: string) {
   expect(npc._model, `${label} tagged`).toBe(MODEL_TAG);
   expect(typeof npc.class, `${label} class`).toBe('string');
+  expect(npc.name, `${label} name`).toBeTruthy();
   npc.templates.forEach((t: any) => expect(typeof t, `${label} template`).toBe('string'));
   npc.labels.forEach((l: any) => expect(typeof l, `${label} label`).toBe('string'));
   for (const key of ['hp', 'structure', 'stress', 'heatcap', 'activations']) {

@@ -51,6 +51,16 @@ describe('parseCompconPilot', () => {
 });
 
 describe('parseCompconNpc', () => {
+  it('fills an empty V3 name with the COMP/CON default of tier, templates, class, and tag', () => {
+    const bombard = v3Npcs.find(f => f.name.includes('bombard'))!.json;
+    expect(bombard.name).toBe('');
+    expect(parseCompconNpc(bombard).name).toBe('T1 Elite Bombard Mech');
+
+    const named = JSON.parse(JSON.stringify(bombard));
+    named.name = 'CONDOR REPULSOR';
+    expect(parseCompconNpc(named).name).toBe('CONDOR REPULSOR');
+  });
+
   it('flattens V3 narrative label objects to their titles', () => {
     const json = JSON.parse(JSON.stringify(v3Npcs[0].json));
     json.narrative.labels = [
