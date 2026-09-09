@@ -21,12 +21,12 @@ const V2_TO_V3_STAT: Record<string, string> = {
   engineering: 'eng',
 };
 
-function classId(cls: any): string {
-  return (cls && typeof cls === 'object') ? cls.id : cls;
+function refId(ref: any): string {
+  return (ref && typeof ref === 'object') ? ref.id : ref;
 }
 
-function templateIds(templates: any): string[] {
-  return (templates || []).map((t: any) => (typeof t === 'string' ? t : t.id));
+function refData(ref: any): any {
+  return (ref && typeof ref === 'object') ? ref.data : undefined;
 }
 
 function statsFromV3(combatData: any) {
@@ -39,6 +39,24 @@ function statsFromV3(combatData: any) {
   return stats;
 }
 
+function tierArray(value: any): any {
+  return Array.isArray(value) ? value : [value, value, value];
+}
+
+export function featureDataFromV3(data: any): any {
+  if (!data) return undefined;
+  const feature = { ...data };
+  if (Array.isArray(feature.damage)) {
+    feature.damage = feature.damage.map((entry: any) => {
+      const { val, ...rest } = entry;
+      return { ...rest, damage: 'damage' in entry ? entry.damage : tierArray(val) };
+    });
+  }
+  if ('accuracy' in feature && feature.accuracy !== undefined) feature.accuracy = tierArray(feature.accuracy);
+  if ('attack_bonus' in feature && feature.attack_bonus !== undefined) feature.attack_bonus = tierArray(feature.attack_bonus);
+  return feature;
+}
+
 function itemsFromV3(features: any, tier: any) {
   return (features || []).map((f: any) => ({
     itemID: f.id,
@@ -48,6 +66,7 @@ function itemsFromV3(features: any, tier: any) {
     destroyed: !!(f.data && f.data.destroyed),
     charged: false,
     uses: 0,
+    data: featureDataFromV3(f.data),
   }));
 }
 
@@ -61,18 +80,21 @@ export function parseCompconNpc(raw: any): DomainNpc {
   const isV3 = 'combat_data' in src;
 
   if (!isV3) {
-    src.class = classId(src.class);
-    src.templates = templateIds(src.templates);
+    src.class = refId(src.class);
+    src.templates = (src.templates || []).map(refId);
     return NpcSchema.parse(src);
   }
 
+  const { features, ...rest } = src;
   const npc = {
-    ...src,
-    class: classId(src.class),
-    templates: templateIds(src.templates),
+    ...rest,
+    class: refId(src.class),
+    classData: refData(src.class),
+    templates: (src.templates || []).map(refId),
+    templateData: (src.templates || []).map(refData).filter((data: any) => data),
     labels: (src.narrative && src.narrative.labels) || [],
     stats: statsFromV3(src.combat_data),
-    items: itemsFromV3(src.features, src.tier),
+    items: itemsFromV3(features, src.tier),
   };
 
   return NpcSchema.parse(npc);

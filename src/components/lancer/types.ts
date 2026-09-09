@@ -60,17 +60,6 @@ export interface Pilot {
   cloud_portrait?: string;
 }
 
-export interface Lcp {
-  id: string;
-  active?: boolean;
-  manifest: {
-    name: string;
-    author?: string;
-    version?: string;
-  };
-  data?: unknown;
-}
-
 export interface Encounter {
   id: string;
   name: string;

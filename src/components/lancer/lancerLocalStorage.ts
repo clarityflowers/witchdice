@@ -4,7 +4,7 @@ import {
   getStorageName,
 } from '../../localstorage.js';
 
-import type { Lcp, Encounter } from './types';
+import type { Encounter } from './types';
 import { parseCompconPilot } from './domain/parsePilot';
 import { parseCompconNpc } from './domain/parseNpc';
 import type { DomainPilot, DomainNpc } from './domain/schema';
@@ -12,27 +12,23 @@ import type { DomainPilot, DomainNpc } from './domain/schema';
 export const MODEL_TAG = 'domain-v1';
 
 export const PILOT_PREFIX = 'pilot';
-export const LCP_PREFIX = 'lcp';
 export const ENCOUNTER_PREFIX = 'encounter';
 export const STORAGE_ID_LENGTH = 6;
 export const NPC_LIBRARY_NAME = 'lancer-npcs'
 export const SELECTED_CHARACTER_KEY = "lancer-selected-character"
 export const LANCER_SQUAD_MECH_KEY = 'lancer-squad-mech'
 
-export function saveLcpData(contentPack: Lcp) {
-  saveLocalData(LCP_PREFIX, contentPack.id.slice(0,STORAGE_ID_LENGTH), contentPack.manifest.name, contentPack);
+const LEGACY_LCP_PREFIX = 'lcp-';
+
+export function purgeLegacyLcpData() {
+  const staleKeys: string[] = [];
+  for (let i = 0; i < localStorage.length; i++) {
+    const key = localStorage.key(i);
+    if (key && key.startsWith(LEGACY_LCP_PREFIX)) staleKeys.push(key);
+  }
+  staleKeys.forEach(key => localStorage.removeItem(key));
+  return staleKeys.length;
 }
-
-export function loadLcpData(lcpID: string): Lcp | null {
-  return loadLocalData(LCP_PREFIX, lcpID.slice(0,STORAGE_ID_LENGTH));
-}
-
-export function deleteLcpData(lcpID: string, lcpName: string) {
-  const storageName = getStorageName(LCP_PREFIX, lcpID.slice(0,STORAGE_ID_LENGTH), lcpName);
-  localStorage.removeItem(storageName);
-}
-
-
 
 export function savePilotData(pilot: DomainPilot) {
   const tagged = { ...pilot, _model: MODEL_TAG };

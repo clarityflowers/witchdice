@@ -1,16 +1,15 @@
 import { parseCompconPilot } from './parsePilot';
-import { registerPilotInlineContent, findSkillData } from '../lancerData';
-import { loadFixture, INLINE_LCP_PILOT } from './__fixtures__/fixtures';
-
-beforeEach(() => {
-  (globalThis as any).localStorage = {
-    length: 0,
-    key: () => null,
-    getItem: () => null,
-    setItem: () => {},
-    removeItem: () => {},
-  };
-});
+import { parseCompconNpc } from './parseNpc';
+import {
+  registerPilotInlineContent,
+  registerNpcInlineContent,
+  findSkillData,
+  findNpcClassData,
+  findNpcFeatureData,
+  findNpcTemplateData,
+  getModdedWeaponData,
+} from '../lancerData';
+import { loadFixture, INLINE_LCP_PILOT, v3Npcs } from './__fixtures__/fixtures';
 
 describe('inline content registry resolves V3 self-contained content', () => {
   it('resolves LCP skills carried inline in the export (not just bundled content)', () => {
@@ -22,5 +21,41 @@ describe('inline content registry resolves V3 self-contained content', () => {
 
     expect(findSkillData('igfa1_sk_jury_rig').name).not.toBe('UNKNOWN SKILL');
     expect(findSkillData('sk_push_boundaries').name).not.toBe('UNKNOWN SKILL');
+  });
+
+  it('resolves NPC class, templates, and features carried inline in a V3 NPC export', () => {
+    const raw = v3Npcs[0].json;
+    const npc = parseCompconNpc(raw);
+
+    expect(findNpcClassData(npc.class).id).toBe('npcc_unknown');
+
+    registerNpcInlineContent(npc);
+
+    expect(findNpcClassData(npc.class).name).toBe(raw.class.data.name);
+    npc.templates.forEach((templateID, i) =>
+      expect(findNpcTemplateData(templateID).name).toBe(raw.templates[i].data.name));
+    npc.items.forEach(item =>
+      expect(findNpcFeatureData(item.itemID).id).toBe(item.itemID));
+  });
+
+  it('normalizes V3 tiered weapon values so tier selection works on inline NPC weapons', () => {
+    v3Npcs.forEach(({ name, json }) => {
+      const npc = parseCompconNpc(json);
+      registerNpcInlineContent(npc);
+
+      npc.items
+        .filter(item => findNpcFeatureData(item.itemID).type === 'Weapon')
+        .forEach(item => {
+          const featureData = findNpcFeatureData(item.itemID);
+          const weaponData = getModdedWeaponData({ id: item.itemID, npcTier: npc.tier });
+          (weaponData.damage || []).forEach((damage: any) => {
+            expect(typeof damage.val, `${name} ${item.itemID} damage`).toBe('number');
+          });
+          if ('accuracy' in featureData) {
+            expect(Array.isArray(featureData.accuracy), `${name} ${item.itemID} accuracy`).toBe(true);
+          }
+          expect(Array.isArray(featureData.attack_bonus), `${name} ${item.itemID} attack_bonus`).toBe(true);
+        });
+    });
   });
 });

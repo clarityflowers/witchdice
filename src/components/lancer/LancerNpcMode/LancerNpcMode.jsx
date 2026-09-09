@@ -30,7 +30,7 @@ import {
   getRandomFingerprint,
 } from '../../../localstorage.js';
 
-import { findNpcClassData, } from '../lancerData.js';
+import { registerNpcsInlineContent } from '../lancerData.js';
 import { getStat, getMarkerForNpcID, fullRepairNpc, applyUpdatesToNpc } from './npcUtils';
 
 import './LancerNpcMode.scss';
@@ -78,6 +78,9 @@ const LancerNpcMode = ({
   const activeEncounter = activeEncounterID && loadEncounterData(activeEncounterID);
   const activeNpc = (activeEncounter && activeNpcFingerprint) && activeEncounter.allNpcs[activeNpcFingerprint];
 
+  registerNpcsInlineContent(Object.values(npcLibrary))
+  if (activeEncounter) registerNpcsInlineContent(Object.values(activeEncounter.allNpcs))
+
   const startedWithEncounterOpen = !!localStorage.getItem(SELECTED_ENCOUNTER_KEY);
   // console.log('activeEncounter',activeEncounter);
 
@@ -117,8 +120,6 @@ const LancerNpcMode = ({
       }
     }
   }, []);
-
-  const isMissingNpcLCP = findNpcClassData('npcc_ace').id === 'npcc_unknown'
 
   // =============== NPC ROSTER ==================
 
@@ -417,30 +418,6 @@ const LancerNpcMode = ({
 
   return (
     <div className='LancerNpcMode'>
-      {isMissingNpcLCP &&
-        <div className='missing-lcp-warning'>
-          <h2>Warning: missing NPC LCP</h2>
-          <p>
-            Massif Press generously provides the player-facing rules for Lancer for free, but
-            to access GM content you must purchase the game.
-          </p>
-          <p>
-            You'll need to add the Lancer Content Pack (LCP) for NPCs to see their data here.
-          </p>
-          <ol>
-            <li>
-              <a href="https://massif-press.itch.io/corebook-pdf" target="_blank" rel="noopener noreferrer">
-                Purchase Lancer on itch.io
-              </a>
-            </li>
-            <li>Download <strong>LANCER NPC data for COMP/CON</strong></li>
-            <li>Click the <span className='fake-button'>— Core LCP Data —</span> button up above this warning. ⤴</li>
-
-            <li>Click <span className='fake-new'>New <span className="asset plus"/></span> and upload the <strong>Lancer_CORE_NPCs</strong> .lcp</li>
-          </ol>
-        </div>
-      }
-
       { (jumplinks.length > 0) &&
         <JumplinkPanel jumplinks={jumplinks} partyConnected={partyConnected} />
       }
