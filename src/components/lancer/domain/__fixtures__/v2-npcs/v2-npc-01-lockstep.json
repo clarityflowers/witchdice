@@ -10,7 +10,9 @@
   "name": "Lockstep",
   "subtitle": "",
   "campaign": "",
-  "labels": [],
+  "labels": [
+    "Label 1"
+  ],
   "tag": "Mech",
   "templates": [
     "npct_veteran"

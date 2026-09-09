@@ -10,7 +10,9 @@
   "name": "Hazel",
   "subtitle": "",
   "campaign": "",
-  "labels": [],
+  "labels": [
+    "Label 1"
+  ],
   "tag": "Mech",
   "templates": [
     "npct_vehicle"

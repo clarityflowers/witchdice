@@ -12,6 +12,9 @@ const DIRS = [
   ['new v3 format NPCs', 'v3-npcs', 'npc'],
 ];
 
+const LEGACY_STORAGE_SRC = path.join(SRC, 'legacy-storage');
+const LEGACY_STORAGE_OUT = path.join(OUT, 'legacy-storage');
+
 const RENAMES = {
   'new v3 format PCs/EVILNOESHOTGUN.json': 'v3-pilot-inline-lcp-content.json',
 };
@@ -98,6 +101,19 @@ function isMech(o) {
 function isNpcRoot(o) {
   return 'class' in o && 'tier' in o && ('items' in o || 'features' in o);
 }
+function anonymizeLabels(labels) {
+  if (!Array.isArray(labels)) return;
+  labels.forEach((label, i) => {
+    const title = `Label ${i + 1}`;
+    if (label && typeof label === 'object') {
+      label.title = title;
+      if (typeof label.value === 'string' && label.value !== '') label.value = 'redacted';
+    } else if (typeof label === 'string') {
+      labels[i] = title;
+    }
+  });
+}
+
 function walk(node, seed) {
   if (Array.isArray(node)) {
     node.forEach(v => walk(v, seed));
@@ -116,7 +132,10 @@ function walk(node, seed) {
   if (isNpcRoot(node) && typeof node.name === 'string' && node.name !== '') {
     node.name = pick(NPC_NAMES, seed + node.name);
   }
-  if (isNpcRoot(node) && Array.isArray(node.labels)) node.labels = [];
+  if (isNpcRoot(node)) {
+    anonymizeLabels(node.labels);
+    if (node.narrative) anonymizeLabels(node.narrative.labels);
+  }
   if (Array.isArray(node.custom_counters)) {
     node.custom_counters.forEach((c, i) => {
       if (c && typeof c.name === 'string') c.name = `Custom Counter ${i + 1}`;
@@ -132,6 +151,7 @@ function walk(node, seed) {
   }
 
   for (const [k, v] of Object.entries(node)) {
+    if (k === 'labels') continue;
     if (BLANK_KEYS.has(k)) {
       node[k] = typeof v === 'number' ? 0 : Array.isArray(v) ? [] : '';
       continue;
@@ -157,7 +177,9 @@ function slugify(str) {
   return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 }
 
-fs.rmSync(OUT, { recursive: true, force: true });
+for (const outDir of [...DIRS.map(d => d[1]), 'legacy-storage']) {
+  fs.rmSync(path.join(OUT, outDir), { recursive: true, force: true });
+}
 let count = 0;
 for (const [srcDir, outDir, kind] of DIRS) {
   const from = path.join(SRC, srcDir);
@@ -177,6 +199,31 @@ for (const [srcDir, outDir, kind] of DIRS) {
     count++;
   });
 }
+function storageKeyFor(key, value) {
+  const match = key.match(/^(pilot|encounter)-([^-]+)-/);
+  if (!match || !value || typeof value !== 'object') return key;
+  return `${match[1]}-${match[2]}-${value.name}`;
+}
+
+if (fs.existsSync(LEGACY_STORAGE_SRC)) {
+  fs.mkdirSync(LEGACY_STORAGE_OUT, { recursive: true });
+  const dumps = fs.readdirSync(LEGACY_STORAGE_SRC)
+    .filter(f => f.endsWith('-localstorage.json')).sort();
+  dumps.forEach(file => {
+    let dump = JSON.parse(fs.readFileSync(path.join(LEGACY_STORAGE_SRC, file), 'utf8'));
+    if (typeof dump === 'string') dump = JSON.parse(dump);
+    const out = {};
+    Object.entries(dump).forEach(([key, stored]) => {
+      let value = stored;
+      try { value = JSON.parse(stored); } catch (e) { /* plain string value */ }
+      walk(value, file + key);
+      out[storageKeyFor(key, value)] = value;
+    });
+    fs.writeFileSync(path.join(LEGACY_STORAGE_OUT, file), JSON.stringify(out, null, 2) + '\n');
+    count++;
+  });
+}
+
 const leaks = [];
 function audit(node, key, file) {
   if (Array.isArray(node)) return node.forEach(v => audit(v, key, file));
@@ -189,7 +236,7 @@ function audit(node, key, file) {
     leaks.push(`${file}: ${key} = ${JSON.stringify(node.slice(0, 70))}`);
   }
 }
-for (const [, outDir] of DIRS.map(d => [d[0], d[1]])) {
+for (const outDir of [...DIRS.map(d => d[1]), 'legacy-storage']) {
   const dir = path.join(OUT, outDir);
   if (!fs.existsSync(dir)) continue;
   for (const f of fs.readdirSync(dir)) {

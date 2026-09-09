@@ -51,6 +51,18 @@ describe('parseCompconPilot', () => {
 });
 
 describe('parseCompconNpc', () => {
+  it('flattens V3 narrative label objects to their titles', () => {
+    const json = JSON.parse(JSON.stringify(v3Npcs[0].json));
+    json.narrative.labels = [
+      { title: 'Bloom tarot', value: '' },
+      { title: 'GM notes', value: 'secret', gm_only: true },
+      'legacy string',
+      { title: '', value: '' },
+    ];
+    const npc = parseCompconNpc(json);
+    expect(npc.labels).toEqual(['Bloom tarot', 'GM notes', 'legacy string']);
+  });
+
   it.each([...v2Npcs, ...v3Npcs])('parses $name to a valid domain npc', ({ json }) => {
     const npc = parseCompconNpc(json);
     expect(npc.id).toBeTruthy();

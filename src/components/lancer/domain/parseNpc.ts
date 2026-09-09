@@ -29,6 +29,12 @@ function refData(ref: any): any {
   return (ref && typeof ref === 'object') ? ref.data : undefined;
 }
 
+function labelTitles(labels: any): string[] {
+  return (labels || [])
+    .map((label: any) => (label && typeof label === 'object') ? label.title : label)
+    .filter((label: any) => typeof label === 'string' && label !== '');
+}
+
 function statsFromV3(combatData: any) {
   const max = (combatData && combatData.stats && combatData.stats.max) || {};
   const stats: Record<string, any> = { bonuses: {}, overrides: {} };
@@ -82,6 +88,7 @@ export function parseCompconNpc(raw: any): DomainNpc {
   if (!isV3) {
     src.class = refId(src.class);
     src.templates = (src.templates || []).map(refId);
+    src.labels = labelTitles(src.labels);
     return NpcSchema.parse(src);
   }
 
@@ -92,7 +99,7 @@ export function parseCompconNpc(raw: any): DomainNpc {
     classData: refData(src.class),
     templates: (src.templates || []).map(refId),
     templateData: (src.templates || []).map(refData).filter((data: any) => data),
-    labels: (src.narrative && src.narrative.labels) || [],
+    labels: labelTitles(src.narrative && src.narrative.labels),
     stats: statsFromV3(src.combat_data),
     items: itemsFromV3(features, src.tier),
   };

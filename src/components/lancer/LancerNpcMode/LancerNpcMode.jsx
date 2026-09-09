@@ -24,6 +24,7 @@ import {
 } from '../lancerLocalStorage';
 
 import { parseCompconNpc } from '../domain/parseNpc';
+import { npcsFromCompconBackup } from '../domain/compconArchive';
 
 import {
   getIDFromStorageName,
@@ -177,15 +178,12 @@ const LancerNpcMode = ({
 
       console.log('fileName',fileName);
 
-      // compcon backups — have a lot of stuff we don't need
       if (fileName.endsWith('.compcon')) {
-        const compconBackup = JSON.parse(e.target.result)
-        const npcFile = compconBackup.find(backupFile => backupFile.filename.startsWith('npcs'))
-        const npcArray = JSON.parse(npcFile.data)
-
-        // create ALL the new npcs & save them to localstorage
-        if (npcArray && npcArray.length > 0) {
+        const npcArray = npcsFromCompconBackup(JSON.parse(e.target.result))
+        if (npcArray.length > 0) {
           createNewNpcs(npcArray)
+        } else {
+          console.error('No NPCs found in COMP/CON backup')
         }
 
       // single json npc; just create it

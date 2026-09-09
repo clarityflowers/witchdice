@@ -141,7 +141,7 @@ describe('encounter storage round-trip', () => {
     const first = loadEncounterData('363387abcdef') as any;
     expect(first.allNpcs['A-111111']._model).toBe(MODEL_TAG);
     expect(getStat('hp', first.allNpcs['A-111111'])).toBe(getStat('hp', v2));
-    expect(first.allNpcs['A-111111'].currentStats).toEqual({ hp: 5 });
+    expect(first.allNpcs['A-111111'].currentStats).toEqual({ hp: 5, activations: 1 });
 
     const before = (globalThis as any).localStorage.getItem('encounter-363387-Bloom tarot');
     loadEncounterData('363387abcdef');

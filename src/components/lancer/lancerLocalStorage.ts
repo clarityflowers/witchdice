@@ -7,7 +7,7 @@ import {
 import type { Encounter } from './types';
 import { parseCompconPilot } from './domain/parsePilot';
 import { parseCompconNpc } from './domain/parseNpc';
-import { applyUpdatesToNpc } from './LancerNpcMode/npcUtils';
+import { applyUpdatesToNpc, getStat } from './LancerNpcMode/npcUtils';
 import { registerNpcInlineContent } from './lancerData';
 import type { DomainPilot, DomainNpc } from './domain/schema';
 
@@ -65,6 +65,19 @@ export function saveNpcLibrary(library: Record<string, any>) {
   localStorage.setItem(NPC_LIBRARY_NAME, JSON.stringify(tagged));
 }
 
+function normalizeNpcCombatState(npc: any) {
+  const current = npc.currentStats || {};
+  Object.keys(current).forEach(key => {
+    if (typeof current[key] === 'string' && current[key].trim() !== '' && !Number.isNaN(Number(current[key]))) {
+      current[key] = Number(current[key]);
+    }
+  });
+  if (typeof current.activations !== 'number') {
+    current.activations = getStat('activations', npc);
+  }
+  npc.currentStats = current;
+}
+
 function migrateStoredNpcs(stored: Record<string, any>, describe: string) {
   const out: Record<string, any> = {};
   let migrated = false;
@@ -81,6 +94,7 @@ function migrateStoredNpcs(stored: Record<string, any>, describe: string) {
         registerNpcInlineContent(domain);
         applyUpdatesToNpc({ repairAllWeaponsAndSystems: true }, domain);
       }
+      normalizeNpcCombatState(domain);
       out[key] = domain;
       migrated = true;
     } catch (e) {

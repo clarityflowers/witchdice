@@ -10,7 +10,9 @@
   "name": "Dogwood",
   "subtitle": "",
   "campaign": "",
-  "labels": [],
+  "labels": [
+    "Label 1"
+  ],
   "tag": "Mech",
   "templates": [],
   "items": [
