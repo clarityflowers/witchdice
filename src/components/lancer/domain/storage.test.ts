@@ -1,8 +1,9 @@
 import {
-  savePilotData, loadPilotData, MODEL_TAG, loadNpcLibrary,
+  savePilotData, loadPilotData, MODEL_TAG, loadNpcLibrary, loadEncounterData,
 } from '../lancerLocalStorage';
 import { parseCompconPilot } from './parsePilot';
 import { applyUpdatesToPlayer } from '../LancerPlayerMode/playerUtils';
+import { getStat } from '../LancerNpcMode/npcUtils';
 import { v2Pilots, v3Pilots, v2Npcs, v3Npcs } from './__fixtures__/fixtures';
 
 class LocalStorageMock {
@@ -72,5 +73,78 @@ describe('npc library storage round-trip', () => {
       expect(typeof npc.class).toBe('string');
       expect(typeof (npc.stats as any).hp).toBe('number');
     });
+  });
+});
+
+describe('encounter storage round-trip', () => {
+  function legacyEncounterWith(npcs: any[]) {
+    const encounter = {
+      id: '363387abcdef',
+      name: 'Bloom tarot',
+      active: npcs.map(npc => npc.fingerprint),
+      reinforcements: [],
+      casualties: [],
+      allNpcs: Object.fromEntries(npcs.map(npc => [npc.fingerprint, npc])),
+      roundCount: 2,
+    };
+    (globalThis as any).localStorage.setItem(`encounter-363387-${encounter.name}`, JSON.stringify(encounter));
+    return encounter;
+  }
+
+  function legacyV3Instance(json: any, fingerprint: string) {
+    return {
+      ...json,
+      fingerprint,
+      items: [],
+      currentStats: { hp: 3, structure: 1, stress: 1, heatcap: 2, activations: 0 },
+      conditions: ['Impaired'],
+      overshield: 2,
+      burn: 1,
+      per_round_uses: { something: 1 },
+    };
+  }
+
+  it('migrates raw V3 NPC instances left in an encounter by the pre-domain build', () => {
+    const v3 = v3Npcs.find(f => f.name.includes('engineer'))!.json;
+    legacyEncounterWith([legacyV3Instance(v3, 'A-495669'), legacyV3Instance(v3, 'B-555861')]);
+
+    const encounter = loadEncounterData('363387abcdef') as any;
+    expect(encounter).toBeTruthy();
+    expect(encounter.active).toEqual(['A-495669', 'B-555861']);
+
+    const npc = encounter.allNpcs['A-495669'];
+    expect(() => getStat('stress', npc)).not.toThrow();
+    expect(npc._model).toBe(MODEL_TAG);
+    expect(getStat('stress', npc)).toBe(v3.combat_data.stats.max.stress);
+    expect(npc.class).toBe('npcc_engineer');
+
+    expect(npc.fingerprint).toBe('A-495669');
+    expect(npc.currentStats).toEqual({ hp: 3, structure: 1, stress: 1, heatcap: 2, activations: 0 });
+    expect(npc.conditions).toEqual(['Impaired']);
+    expect(npc.overshield).toBe(2);
+    expect(npc.burn).toBe(1);
+    expect(npc.per_round_uses).toEqual({ something: 1 });
+
+    const turret = npc.items.find((item: any) => item.itemID === 'npcf_deployable_turret_engineer');
+    expect(turret, 'features rebuilt into items').toBeTruthy();
+    expect(turret.uses).toBe(6);
+
+    const persisted = JSON.parse((globalThis as any).localStorage.getItem('encounter-363387-Bloom tarot'));
+    expect(persisted.allNpcs['B-555861']._model).toBe(MODEL_TAG);
+  });
+
+  it('leaves already-migrated encounters alone and still loads V2 instances', () => {
+    const v2 = v2Npcs[0].json;
+    const instance = { ...v2, fingerprint: 'A-111111', currentStats: { hp: 5 } };
+    legacyEncounterWith([instance]);
+
+    const first = loadEncounterData('363387abcdef') as any;
+    expect(first.allNpcs['A-111111']._model).toBe(MODEL_TAG);
+    expect(getStat('hp', first.allNpcs['A-111111'])).toBe(getStat('hp', v2));
+    expect(first.allNpcs['A-111111'].currentStats).toEqual({ hp: 5 });
+
+    const before = (globalThis as any).localStorage.getItem('encounter-363387-Bloom tarot');
+    loadEncounterData('363387abcdef');
+    expect((globalThis as any).localStorage.getItem('encounter-363387-Bloom tarot')).toBe(before);
   });
 });

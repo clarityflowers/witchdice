@@ -64,6 +64,11 @@ export interface Pilot {
 export interface Encounter {
   id: string;
   name: string;
+  active: string[];
+  reinforcements: string[];
+  casualties: string[];
+  allNpcs: Record<string, any>;
+  roundCount: number;
 }
 
 export interface RobotState {

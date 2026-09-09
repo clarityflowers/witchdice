@@ -7,6 +7,8 @@ import {
 import type { Encounter } from './types';
 import { parseCompconPilot } from './domain/parsePilot';
 import { parseCompconNpc } from './domain/parseNpc';
+import { applyUpdatesToNpc } from './LancerNpcMode/npcUtils';
+import { registerNpcInlineContent } from './lancerData';
 import type { DomainPilot, DomainNpc } from './domain/schema';
 
 export const MODEL_TAG = 'domain-v1';
@@ -63,28 +65,38 @@ export function saveNpcLibrary(library: Record<string, any>) {
   localStorage.setItem(NPC_LIBRARY_NAME, JSON.stringify(tagged));
 }
 
-export function loadNpcLibrary(): Record<string, DomainNpc> {
-  const stored = localStorage.getItem(NPC_LIBRARY_NAME);
-  if (!stored) return {};
-  const raw = JSON.parse(stored);
+function migrateStoredNpcs(stored: Record<string, any>, describe: string) {
   const out: Record<string, any> = {};
   let migrated = false;
-  for (const id of Object.keys(raw)) {
-    const npc = raw[id];
+  for (const key of Object.keys(stored)) {
+    const npc = stored[key];
     if (npc && npc._model === MODEL_TAG) {
-      out[id] = npc;
+      out[key] = npc;
       continue;
     }
     try {
-      out[id] = { ...parseCompconNpc(npc), _model: MODEL_TAG };
+      const hadItems = Array.isArray(npc && npc.items) && npc.items.length > 0;
+      const domain: any = { ...parseCompconNpc(npc), _model: MODEL_TAG };
+      if (!hadItems) {
+        registerNpcInlineContent(domain);
+        applyUpdatesToNpc({ repairAllWeaponsAndSystems: true }, domain);
+      }
+      out[key] = domain;
       migrated = true;
     } catch (e) {
-      console.error('Failed to migrate stored NPC to domain model; using raw as-is', id, e);
-      out[id] = npc;
+      console.error(`Failed to migrate stored ${describe} to domain model; using raw as-is`, key, e);
+      out[key] = npc;
     }
   }
-  if (migrated) saveNpcLibrary(out);
-  return out;
+  return { npcs: out, migrated };
+}
+
+export function loadNpcLibrary(): Record<string, DomainNpc> {
+  const stored = localStorage.getItem(NPC_LIBRARY_NAME);
+  if (!stored) return {};
+  const { npcs, migrated } = migrateStoredNpcs(JSON.parse(stored), 'NPC');
+  if (migrated) saveNpcLibrary(npcs);
+  return npcs;
 }
 
 export function saveEncounterData(encounter: Encounter) {
@@ -92,7 +104,14 @@ export function saveEncounterData(encounter: Encounter) {
 }
 
 export function loadEncounterData(encounterID: string): Encounter | null {
-  return loadLocalData(ENCOUNTER_PREFIX, encounterID.slice(0,STORAGE_ID_LENGTH));
+  const encounter: Encounter | null = loadLocalData(ENCOUNTER_PREFIX, encounterID.slice(0,STORAGE_ID_LENGTH));
+  if (!encounter) return null;
+  const { npcs, migrated } = migrateStoredNpcs(encounter.allNpcs || {}, 'encounter NPC');
+  if (migrated) {
+    encounter.allNpcs = npcs;
+    saveEncounterData(encounter);
+  }
+  return encounter;
 }
 
 export function deleteEncounterData(encounter: Encounter) {
