@@ -5,7 +5,7 @@ import { parseCompconPilot } from './parsePilot';
 import { parseCompconNpc } from './parseNpc';
 import { applyUpdatesToPlayer } from '../LancerPlayerMode/playerUtils';
 import { getStat } from '../LancerNpcMode/npcUtils';
-import { v2Pilots, v3Pilots, v2Npcs, v3Npcs } from './__fixtures__/fixtures';
+import { v2Pilots, v3Pilots, v2Npcs, v3Npcs, loadFixture, BONDED_V3_PILOT } from './__fixtures__/fixtures';
 
 class LocalStorageMock {
   store: Record<string, string> = {};
@@ -45,6 +45,24 @@ describe('pilot storage round-trip', () => {
       expect(typeof loaded.mechs[0].current_hp, name).toBe('number');
       expect(Number.isNaN(loaded.mechs[0].current_hp), name).toBe(false);
     }
+  });
+
+  it('flattens a nested V3 bond left on an already-migrated stored pilot', () => {
+    const raw = loadFixture('v3-pilots', BONDED_V3_PILOT);
+    const stale: any = { ...parseCompconPilot(raw), _model: MODEL_TAG };
+    for (const field of ['bondId', 'bondData', 'bondPowers', 'burdens', 'bondAnswers', 'minorIdeal', 'xp', 'stress']) delete stale[field];
+    stale.bond = raw.data.bond;
+    (globalThis as any).localStorage.setItem(`pilot-${stale.id.slice(0, 6)}-${stale.name}`, JSON.stringify(stale));
+
+    const loaded = loadPilotData(stale.id) as any;
+    expect(loaded.bond).toBeUndefined();
+    expect(loaded.bondId).toBe(raw.data.bond.bondId);
+    expect(loaded.bondData.id).toBe(raw.data.bond.bondId);
+    expect(loaded.bondPowers.length).toBe(raw.data.bond.bondPowers.length);
+
+    const persisted = JSON.parse((globalThis as any).localStorage.getItem(`pilot-${stale.id.slice(0, 6)}-${stale.name}`));
+    expect(persisted.bond).toBeUndefined();
+    expect(persisted.bondId).toBe(raw.data.bond.bondId);
   });
 
   it('round-trips a mutation through applyUpdatesToPlayer + save + reload', () => {

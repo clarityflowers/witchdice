@@ -1,6 +1,7 @@
 import { parseCompconPilot } from './parsePilot';
 import { parseCompconNpc } from './parseNpc';
-import { v2Pilots, v3Pilots, v2Npcs, v3Npcs } from './__fixtures__/fixtures';
+import { v2Pilots, v3Pilots, v2Npcs, v3Npcs, loadFixture, BONDED_V3_PILOT, INLINE_LCP_PILOT } from './__fixtures__/fixtures';
+import { registerPilotInlineContent, findBondData, findAllBondData } from '../lancerData';
 
 describe('parseCompconPilot', () => {
   it.each([...v2Pilots, ...v3Pilots])('parses $name to a valid domain pilot', ({ json }) => {
@@ -47,6 +48,45 @@ describe('parseCompconPilot', () => {
     const mech = pilot.mechs[0];
     expect(typeof mech.current_hp).toBe('number');
     expect([0, 1]).toContain(mech.current_core_energy);
+  });
+
+  it('flattens the nested V3 bond onto the pilot and keeps the inline bond data', () => {
+    const raw = loadFixture('v3-pilots', BONDED_V3_PILOT);
+    const source = raw.data.bond;
+    const pilot: any = parseCompconPilot(raw);
+
+    expect(pilot.bond).toBeUndefined();
+    expect(pilot.bondId).toBe(source.bondId);
+    expect(pilot.bondData.id).toBe(source.bondId);
+    expect(pilot.bondPowers.map((p: any) => p.name)).toEqual(source.bondPowers.map((p: any) => p.name));
+    expect(pilot.burdens).toEqual(source.burdens);
+    expect(pilot.bondAnswers).toEqual(source.bondAnswers);
+    expect(pilot.minorIdeal).toBe(source.minorIdeal);
+    expect(pilot.xp).toBe(source.xp);
+    expect(pilot.stress).toBe(source.stress);
+
+    registerPilotInlineContent(pilot);
+    expect(findBondData(pilot.bondId).id).toBe(pilot.bondId);
+    expect(findAllBondData()[pilot.bondId].name).toBe(source.data.name);
+    pilot.bondPowers.forEach((power: any) =>
+      expect(findBondData(pilot.bondId).powers.some((p: any) => p.name === power.name), power.name).toBe(true));
+  });
+
+  it('flattens V3 bond powers even when the export carries no bond id', () => {
+    const pilot: any = parseCompconPilot(loadFixture('v3-pilots', INLINE_LCP_PILOT));
+    expect(pilot.bond).toBeUndefined();
+    expect(pilot.bondId).toBe('');
+    expect(pilot.bondData).toBeUndefined();
+    expect(pilot.bondPowers.length).toBeGreaterThan(0);
+  });
+
+  it('leaves V2 top-level bond fields as they are', () => {
+    const bonded = v2Pilots.find(({ json }) => json.bondId);
+    expect(bonded, 'need a bonded V2 pilot fixture').toBeTruthy();
+    const pilot: any = parseCompconPilot(bonded!.json);
+    expect(pilot.bondId).toBe(bonded!.json.bondId);
+    expect(pilot.bondPowers).toEqual(bonded!.json.bondPowers);
+    expect(pilot.bondData).toBeUndefined();
   });
 });
 

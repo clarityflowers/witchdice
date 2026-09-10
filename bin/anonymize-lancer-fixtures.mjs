@@ -17,6 +17,7 @@ const LEGACY_STORAGE_OUT = path.join(OUT, 'legacy-storage');
 
 const RENAMES = {
   'new v3 format PCs/EVILNOESHOTGUN.json': 'v3-pilot-inline-lcp-content.json',
+  'new v3 format PCs/PICKUP.json': 'v3-pilot-bonded.json',
 };
 
 const PROSE_MIN_LENGTH = 30;
@@ -88,6 +89,7 @@ const REDACT_KEYS = new Set([
   'text_appearance', 'history', 'quirks', 'background', 'notes', 'note',
   'minorIdeal', 'majorIdeal', 'bondAnswers', 'resource_note',
   'flavorName', 'flavorDescription', 'campaign', 'subtitle', 'group', 'title',
+  'major_ideals', 'minor_ideals', 'question', 'options', 'prerequisite',
 ]);
 
 const FIXED_TIMESTAMP = 'Thu Jan 01 2026 00:00:00 GMT+0000';
