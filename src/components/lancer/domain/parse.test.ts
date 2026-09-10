@@ -1,5 +1,5 @@
 import { parseCompconPilot } from './parsePilot';
-import { parseCompconNpc } from './parseNpc';
+import { parseCompconNpc, featureDataFromV3 } from './parseNpc';
 import { v2Pilots, v3Pilots, v2Npcs, v3Npcs, loadFixture, BONDED_V3_PILOT, INLINE_LCP_PILOT } from './__fixtures__/fixtures';
 import { registerPilotInlineContent, findBondData, findAllBondData } from '../lancerData';
 
@@ -102,6 +102,62 @@ describe('parseCompconNpc', () => {
       expect(twice.class, name).toBe(once.class);
       expect(twice.templates, name).toEqual(once.templates);
     });
+  });
+
+  it('derives effect text, trigger, and activation tags from V3 action-based features', () => {
+    const ace = v3Npcs.find(f => f.name.includes('ace'))!.json;
+    const npc: any = parseCompconNpc(ace);
+    const byName = (name: string) => npc.items.find((i: any) => i.data.name === name).data;
+    const tagIds = (d: any) => (d.tags || []).map((t: any) => t.id);
+
+    for (const item of npc.items) {
+      if (item.data.type === 'Weapon') continue;
+      expect(typeof item.data.effect, item.data.name).toBe('string');
+      expect(item.data.effect.trim(), item.data.name).not.toBe('');
+    }
+
+    const barrelRoll = byName('Barrel Roll');
+    expect(barrelRoll.trigger).toBe(ace.features.find((f: any) => f.data.name === 'Barrel Roll').data.actions[0].trigger);
+    expect(barrelRoll.effect).not.toContain('Trigger:');
+
+    const strafe = byName('Strafe');
+    expect(tagIds(strafe)).toContain('tg_quick_action');
+    expect((strafe.tags as any[]).find(t => t.id === 'tg_round').val).toBe(1);
+
+    const flight = byName('SSC Flight System');
+    expect(flight.effect).toBe(ace.features.find((f: any) => f.data.name === 'SSC Flight System').data.effect);
+  });
+
+  it('renders multi-action and deployable V3 features into one effect block', () => {
+    const multi = featureDataFromV3({
+      id: 'x', name: 'Eye Of Midnight', type: 'System',
+      actions: [
+        { name: 'Activate', activation: 'Quick', detail: 'On.' },
+        { name: 'Deactivate', activation: 'Quick', detail: 'Off.' },
+      ],
+    });
+    expect(multi.effect).toContain('<strong>Activate</strong> (Quick)');
+    expect(multi.effect).toContain('<strong>Deactivate</strong> (Quick)');
+    expect(multi.trigger).toBeUndefined();
+
+    const turret = featureDataFromV3({
+      id: 'y', name: 'Deployable Turret', type: 'System',
+      deployables: [{
+        name: 'Deployable Turret', activation: 'Quick', size: 0.5, hp: [5, 8, 10], evasion: 10, edef: 10, type: 'Drone',
+        detail: 'Shoots.', range: [{ type: 'Range', val: 10 }], damage: [{ type: 'Kinetic', val: [4, 5, 6] }],
+      }],
+    });
+    expect(turret.effect).toContain('HP {5/8/10}');
+    expect(turret.effect).toContain('Range 10');
+    expect(turret.effect).toContain('{4/5/6} Kinetic');
+    expect(turret.effect).toContain('Shoots.');
+
+    const tech = featureDataFromV3({
+      id: 'z', name: 'Tear Down', type: 'Tech', attack_bonus: [2, 4, 6],
+      actions: [{ name: 'Tear Down', activation: 'Quick Tech', detail: 'Make a tech attack.' }],
+    });
+    expect(tech.tech_type).toBe('Quick');
+    expect(tech.effect).toBe('Make a tech attack.');
   });
 
   it('fills an empty V3 name with the COMP/CON default of tier, templates, class, and tag', () => {

@@ -31,7 +31,7 @@ const PROSE_KEYS = new Set([
 
 const ALLOWED_LONG_KEYS = new Set([
   'id', 'instanceId', 'originId', 'active_mech_id', 'remote_mech_id', 'frame',
-  'name', 'flavorName', 'Website', 'LcpId', 'LcpName', 'itemType', 'core_bonuses',
+  'name', 'flavorName', 'Website', 'LcpId', 'LcpName', 'itemType', 'core_bonuses', 'features.__ids',
 ]);
 
 const CALLSIGNS = [
