@@ -51,6 +51,19 @@ describe('parseCompconPilot', () => {
 });
 
 describe('parseCompconNpc', () => {
+  it('is idempotent: re-parsing an already-parsed V3 NPC keeps its items and stats', () => {
+    v3Npcs.forEach(({ name, json }) => {
+      const once: any = parseCompconNpc(json);
+      const twice: any = parseCompconNpc(JSON.parse(JSON.stringify(once)));
+      expect(twice.items.length, name).toBe(once.items.length);
+      expect(twice.items.map((i: any) => i.itemID), name).toEqual(once.items.map((i: any) => i.itemID));
+      expect(twice.items.every((i: any) => i.data), name).toBe(true);
+      expect(twice.stats, name).toEqual(once.stats);
+      expect(twice.class, name).toBe(once.class);
+      expect(twice.templates, name).toEqual(once.templates);
+    });
+  });
+
   it('fills an empty V3 name with the COMP/CON default of tier, templates, class, and tag', () => {
     const bombard = v3Npcs.find(f => f.name.includes('bombard'))!.json;
     expect(bombard.name).toBe('');

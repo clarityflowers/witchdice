@@ -94,7 +94,8 @@ export function parseCompconNpc(raw: any): DomainNpc {
     throw new Error('Invalid NPC file: missing id or class');
   }
 
-  const isV3 = 'combat_data' in src;
+  const alreadyDomain = Array.isArray(src.items) && !Array.isArray(src.features) && src.stats && typeof src.class === 'string';
+  const isV3 = 'combat_data' in src && !alreadyDomain;
 
   if (!isV3) {
     src.class = refId(src.class);

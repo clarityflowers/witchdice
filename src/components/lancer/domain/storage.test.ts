@@ -2,6 +2,7 @@ import {
   savePilotData, loadPilotData, MODEL_TAG, loadNpcLibrary, loadEncounterData,
 } from '../lancerLocalStorage';
 import { parseCompconPilot } from './parsePilot';
+import { parseCompconNpc } from './parseNpc';
 import { applyUpdatesToPlayer } from '../LancerPlayerMode/playerUtils';
 import { getStat } from '../LancerNpcMode/npcUtils';
 import { v2Pilots, v3Pilots, v2Npcs, v3Npcs } from './__fixtures__/fixtures';
@@ -103,6 +104,21 @@ describe('encounter storage round-trip', () => {
       per_round_uses: { something: 1 },
     };
   }
+
+  it('keeps items on an untagged domain NPC that was copied into an encounter before the library reloaded', () => {
+    const domain: any = parseCompconNpc(v3Npcs[0].json);
+    expect(domain.items.length).toBeGreaterThan(0);
+    const instance = { ...JSON.parse(JSON.stringify(domain)), fingerprint: 'A-123456', currentStats: { hp: 3, heatcap: 1, structure: 1, stress: 1, activations: 1 } };
+    const encounter = { id: '999999', name: 'Fresh', active: [], reinforcements: ['A-123456'], casualties: [], allNpcs: { 'A-123456': instance }, roundCount: 1 };
+    (globalThis as any).localStorage.setItem('encounter-999999-Fresh', JSON.stringify(encounter));
+
+    const loaded: any = loadEncounterData('999999');
+    const npc = loaded.allNpcs['A-123456'];
+    expect(npc._model).toBe(MODEL_TAG);
+    expect(npc.items.length).toBe(domain.items.length);
+    expect(npc.items.every((i: any) => i.data)).toBe(true);
+    expect(npc.currentStats.hp).toBe(3);
+  });
 
   it('migrates raw V3 NPC instances left in an encounter by the pre-domain build', () => {
     const v3 = v3Npcs.find(f => f.name.includes('engineer'))!.json;
